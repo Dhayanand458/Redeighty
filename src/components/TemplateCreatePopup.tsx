@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Type, Check } from 'lucide-react';
 
 interface TemplateCreatePopupProps {
   isOpen: boolean;
@@ -55,15 +55,12 @@ export const TemplateCreatePopup: React.FC<TemplateCreatePopupProps> = ({
 
   const handleSave = () => {
     if (selectedIndex >= 0 && texts[selectedIndex]?.trim()) {
-      // Filter out completely empty texts
       const nonEmptyTexts = texts.filter(t => t.trim());
       
-      // Ensure we have at least one text
       if (nonEmptyTexts.length === 0) {
-        return; // Don't save if no valid texts
+        return;
       }
       
-      // Adjust selectedIndex to be within bounds
       const adjustedSelectedIndex = Math.min(selectedIndex, nonEmptyTexts.length - 1);
       
       onSave(nonEmptyTexts, adjustedSelectedIndex);
@@ -72,68 +69,100 @@ export const TemplateCreatePopup: React.FC<TemplateCreatePopupProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-semibold">Create Template</h2>
+    <div className="premium-modal">
+      <div className="premium-modal-content max-w-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-primary to-blue-600 flex items-center justify-center">
+              <Type className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold gradient-text">Template Editor</h2>
+              <p className="text-muted-foreground">Create and manage text variations</p>
+            </div>
+          </div>
           <button 
             onClick={onClose} 
-            className="p-2 hover:bg-gray-100 rounded touch-manipulation"
+            className="w-10 h-10 rounded-xl glass-button flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
           >
-            <X size={20} />
+            <X className="w-5 h-5" />
           </button>
         </div>
         
-        <div className="text-center mb-6">
+        {/* Add Text Button */}
+        <div className="text-center mb-8">
           <button
             onClick={addText}
-            className="flex items-center justify-center mx-auto p-3 bg-blue-500 text-white rounded touch-manipulation"
+            className="premium-button-primary flex items-center space-x-2 mx-auto px-6 py-3"
           >
-            <Plus size={16} className="mr-1" />
-            Add Text
+            <Plus className="w-5 h-5" />
+            <span>Add Text Variation</span>
           </button>
         </div>
 
-        <div className="space-y-4">
+        {/* Text Items */}
+        <div className="space-y-4 max-h-96 overflow-y-auto">
           {texts.map((text, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium min-w-[20px]">{index + 1}.</span>
+            <div key={index} className="glass-card rounded-xl p-4 space-y-3 animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
+              <div className="flex items-center space-x-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
+                  selectedIndex === index 
+                    ? 'bg-gradient-to-r from-primary to-blue-600 text-white' 
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {index + 1}
+                </div>
+                
                 <input
                   type="text"
                   value={text}
                   onChange={(e) => updateText(index, e.target.value)}
                   onClick={() => setSelectedIndex(index)}
-                  className={`flex-1 p-3 border rounded-lg text-lg ${
-                    selectedIndex === index ? 'border-green-500 bg-green-50' : 'border-gray-300'
+                  className={`flex-1 premium-input ${
+                    selectedIndex === index ? 'ring-2 ring-primary/50 border-primary/50' : ''
                   }`}
-                  placeholder="Enter text"
+                  placeholder="Enter text variation"
                 />
+                
                 <button
                   onClick={() => deleteText(index)}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  className="w-10 h-10 rounded-lg glass-button flex items-center justify-center text-destructive hover:bg-destructive/10 transition-all duration-300"
                 >
-                  <X size={16} />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex space-x-2">
+              
+              <div className="flex space-x-3">
                 <button
-                  onClick={() => handleSave()}
-                  className="flex-1 px-3 py-2 bg-green-500 text-white rounded text-sm touch-manipulation"
-                  disabled={selectedIndex !== index || !text.trim()}
+                  onClick={() => setSelectedIndex(index)}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                    selectedIndex === index
+                      ? 'premium-button-success'
+                      : 'premium-button-secondary'
+                  }`}
+                  disabled={!text.trim()}
                 >
-                  Done
+                  {selectedIndex === index ? (
+                    <span className="flex items-center justify-center space-x-2">
+                      <Check className="w-4 h-4" />
+                      <span>Selected</span>
+                    </span>
+                  ) : (
+                    'Select as Active'
+                  )}
                 </button>
               </div>
             </div>
           ))}
         </div>
 
+        {/* Save Button */}
         {selectedIndex >= 0 && (
-          <div className="mt-6">
+          <div className="mt-8 pt-6 border-t border-white/10">
             <button
               onClick={handleSave}
-              className="w-full bg-blue-500 text-white p-4 rounded-lg text-lg font-medium touch-manipulation"
+              className="w-full premium-button-primary py-4 text-lg"
             >
               Save Template
             </button>

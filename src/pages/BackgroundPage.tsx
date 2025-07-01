@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Edit, ArrowLeft, ArrowRight, Trash2, Save } from 'lucide-react';
+import { Plus, Edit, ArrowLeft, ArrowRight, Trash2, Save, Settings, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TemplateCreatePopup } from '../components/TemplateCreatePopup';
 import { TextImagePopup } from '../components/TextImagePopup';
 import { getProjectData, updateProjectTemplates, deleteProject } from '../services/firestore';
 import { Template } from '../types';
 import { toast } from 'sonner';
-
 
 export const BackgroundPage: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -31,10 +30,8 @@ export const BackgroundPage: React.FC = () => {
     if (!code) return;
     try {
       const data = await getProjectData(code);
-      // Initialize textImages if not present and ensure selectedIndex is valid
       const templatesWithImages = data.templates.map(template => {
         const textImages = template.textImages || {};
-        // Ensure selectedIndex is within bounds
         const validSelectedIndex = Math.min(
           template.selectedIndex, 
           Math.max(0, template.texts.length - 1)
@@ -54,15 +51,12 @@ export const BackgroundPage: React.FC = () => {
 
   const saveTemplate = (texts: string[], selectedIndex: number) => {
     if (editingTemplate !== null) {
-      // Edit existing template
       const newTemplates = [...templates];
       const oldTemplate = newTemplates[editingTemplate];
       
-      // Preserve existing textImages but remap them to new text indices
       const oldTextImages = oldTemplate.textImages || {};
       const newTextImages: { [key: number]: string[] } = {};
       
-      // Map old text indices to new text indices
       let newIndex = 0;
       for (let oldIndex = 0; oldIndex < oldTemplate.texts.length; oldIndex++) {
         const oldText = oldTemplate.texts[oldIndex];
@@ -81,10 +75,8 @@ export const BackgroundPage: React.FC = () => {
         textImages: newTextImages
       };
       setTemplates(newTemplates);
-      // Don't auto-save to Firebase - user must click Save All
       setHasUnsavedChanges(true);
     } else {
-      // Create new template
       const newTemplate: Template = {
         id: templates.length + 1,
         texts,
@@ -101,13 +93,11 @@ export const BackgroundPage: React.FC = () => {
       } else {
         newTemplates = [...templates, newTemplate];
       }
-      // Renumber templates
       const renumberedTemplates = newTemplates.map((template, i) => ({
         ...template,
         id: i + 1
       }));
       setTemplates(renumberedTemplates);
-      // Don't auto-save to Firebase - user must click Save All
       setHasUnsavedChanges(true);
     }
     setEditingTemplate(null);
@@ -116,13 +106,11 @@ export const BackgroundPage: React.FC = () => {
 
   const deleteTemplate = (index: number) => {
     const newTemplates = templates.filter((_, i) => i !== index);
-    // Renumber templates
     const renumberedTemplates = newTemplates.map((template, i) => ({
       ...template,
       id: i + 1
     }));
     setTemplates(renumberedTemplates);
-    // Don't auto-save to Firebase - user must click Save All
     setHasUnsavedChanges(true);
   };
 
@@ -139,7 +127,6 @@ export const BackgroundPage: React.FC = () => {
     const newTemplates = [...templates];
     newTemplates[templateIndex] = { ...template, selectedIndex: newIndex };
     setTemplates(newTemplates);
-    // Don't auto-save to Firebase - user must click Save All
     setHasUnsavedChanges(true);
   };
 
@@ -173,7 +160,6 @@ export const BackgroundPage: React.FC = () => {
         [selectedTextIndex]: images
       };
       setTemplates(newTemplates);
-      // Don't auto-save to Firebase - user must click Save All
       setHasUnsavedChanges(true);
     }
     setSelectedTemplateForImages(null);
@@ -184,7 +170,7 @@ export const BackgroundPage: React.FC = () => {
     if (!code) return;
     try {
       await deleteProject(code);
-      navigate('/'); // Navigate back to home page after deletion
+      navigate('/');
     } catch (error) {
       console.error('Error deleting project:', error);
     }
@@ -193,7 +179,6 @@ export const BackgroundPage: React.FC = () => {
   const saveAllTemplates = async () => {
     if (!code) return;
     try {
-      // Save the current state exactly as it is
       await updateProjectTemplates(code, templates);
       setHasUnsavedChanges(false);
       toast.success('All templates saved successfully!');
@@ -203,122 +188,199 @@ export const BackgroundPage: React.FC = () => {
     }
   };
 
-
-
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex flex-col space-y-4 mb-6 md:mb-8">
-          <h1 className="text-lg md:text-2xl font-bold">Background Templates - Code: {code}</h1>
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-            <button
-              onClick={() => navigate(`/images/${code}`)}
-              className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 touch-manipulation"
-            >
-              Back to Images
-            </button>
-            <button
-              onClick={saveAllTemplates}
-              className={`px-6 py-3 rounded flex items-center justify-center touch-manipulation ${
-                hasUnsavedChanges 
-                  ? 'bg-orange-500 hover:bg-orange-600 text-white' 
-                  : 'bg-green-500 hover:bg-green-600 text-white'
-              }`}
-            >
-              <Save size={20} className="mr-2" />
-              {hasUnsavedChanges ? 'Save All*' : 'Save All'}
-            </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="bg-red-500 text-white px-6 py-3 rounded hover:bg-red-600 flex items-center justify-center touch-manipulation"
-            >
-              <Trash2 size={20} className="mr-2" />
-              Delete Project
-            </button>
+    <div className="min-h-screen p-4 md:p-8 animate-fade-in">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="premium-header">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-6 lg:space-y-0">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate(`/images/${code}`)}
+                className="navigation-button"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold gradient-text">Background Templates</h1>
+                <p className="text-muted-foreground mt-1">
+                  Code: <span className="font-mono text-primary">{code}</span>
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
+              <button
+                onClick={saveAllTemplates}
+                className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  hasUnsavedChanges 
+                    ? 'premium-button-warning' 
+                    : 'premium-button-success'
+                }`}
+              >
+                <Save className="w-5 h-5" />
+                <span>{hasUnsavedChanges ? 'Save Changes*' : 'All Saved'}</span>
+              </button>
+              
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="premium-button-destructive flex items-center justify-center space-x-2 px-6 py-3"
+              >
+                <Trash2 className="w-5 h-5" />
+                <span>Delete Project</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-6">
+        {/* Content */}
+        <div className="space-y-8">
+          {/* Add Template Button */}
           <div className="text-center">
             <button
               onClick={() => createNewTemplate()}
-              className="bg-green-500 text-white p-4 rounded-full hover:bg-green-600 touch-manipulation"
+              className="group premium-button-primary px-8 py-4 text-lg flex items-center space-x-3 mx-auto"
             >
-              <Plus size={24} />
+              <Plus className="w-6 h-6 transition-transform group-hover:rotate-90" />
+              <span>Create Template</span>
             </button>
           </div>
 
+          {/* Templates */}
           {templates.map((template, templateIndex) => (
-            <div key={template.id} className="space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 p-4 border rounded bg-gray-50">
-                <span className="font-bold text-lg">#{template.id}</span>
-                <button
-                  onClick={() => openImageManager(templateIndex, template.selectedIndex)}
-                  className="flex-1 w-full sm:w-auto text-left p-3 bg-white border rounded hover:bg-gray-100 touch-manipulation min-h-[48px]"
-                >
-                  {template.texts[template.selectedIndex] || 'Empty text'}
-                </button>
-                <div className="flex space-x-2 w-full sm:w-auto">
+            <div key={template.id} className="space-y-6">
+              <div className="template-item animate-slide-up" style={{ animationDelay: `${templateIndex * 100}ms` }}>
+                <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-6">
+                  {/* Template Number */}
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-primary to-blue-600 flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">#{template.id}</span>
+                    </div>
+                  </div>
+
+                  {/* Current Text Display */}
                   <button
-                    onClick={() => navigateText(templateIndex, 'prev')}
-                    className="flex-1 sm:flex-none p-3 bg-blue-500 text-white rounded hover:bg-blue-600 touch-manipulation"
+                    onClick={() => openImageManager(templateIndex, template.selectedIndex)}
+                    className="flex-1 w-full lg:w-auto text-left p-4 glass-card rounded-xl hover:scale-[1.01] transition-all duration-300 min-h-[60px] flex items-center space-x-3"
                   >
-                    <ArrowLeft size={16} />
+                    <ImageIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                    <span className="text-lg font-medium">
+                      {template.texts[template.selectedIndex] || 'Empty text'}
+                    </span>
                   </button>
-                  <button
-                    onClick={() => navigateText(templateIndex, 'next')}
-                    className="flex-1 sm:flex-none p-3 bg-blue-500 text-white rounded hover:bg-blue-600 touch-manipulation"
-                  >
-                    <ArrowRight size={16} />
-                  </button>
-                  <button
-                    onClick={() => deleteTemplate(templateIndex)}
-                    className="flex-1 sm:flex-none p-3 bg-red-500 text-white rounded hover:bg-red-600 touch-manipulation"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => editTemplate(templateIndex)}
-                    className="flex-1 sm:flex-none p-3 bg-yellow-500 text-white rounded hover:bg-yellow-600 touch-manipulation"
-                  >
-                    <Edit size={16} />
-                  </button>
+
+                  {/* Controls */}
+                  <div className="flex space-x-3 w-full lg:w-auto">
+                    <button
+                      onClick={() => navigateText(templateIndex, 'prev')}
+                      className="navigation-button"
+                      disabled={template.selectedIndex === 0}
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    
+                    <button
+                      onClick={() => navigateText(templateIndex, 'next')}
+                      className="navigation-button"
+                      disabled={template.selectedIndex === template.texts.length - 1}
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                    
+                    <button
+                      onClick={() => editTemplate(templateIndex)}
+                      className="edit-button"
+                    >
+                      <Edit className="w-5 h-5" />
+                    </button>
+                    
+                    <button
+                      onClick={() => deleteTemplate(templateIndex)}
+                      className="delete-button"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Text Navigation Indicator */}
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  {template.texts.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        index === template.selectedIndex 
+                          ? 'bg-primary w-8' 
+                          : 'bg-muted-foreground/30'
+                      }`}
+                    />
+                  ))}
                 </div>
               </div>
               
+              {/* Add Template Button Between Items */}
               <div className="text-center">
                 <button
                   onClick={() => createNewTemplate(templateIndex)}
-                  className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600 touch-manipulation"
+                  className="w-12 h-12 rounded-full glass-button flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
                 >
-                  <Plus size={20} />
+                  <Plus className="w-5 h-5" />
                 </button>
               </div>
             </div>
           ))}
+
+          {/* Empty State */}
+          {templates.length === 0 && (
+            <div className="text-center py-16 animate-scale-in">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-primary/20 to-blue-500/20 flex items-center justify-center mx-auto mb-6">
+                <Settings className="w-12 h-12 text-primary" />
+              </div>
+              <h3 className="text-2xl font-bold mb-2">No Templates Yet</h3>
+              <p className="text-muted-foreground mb-8">
+                Create your first background template to get started
+              </p>
+              <button
+                onClick={() => createNewTemplate()}
+                className="premium-button-primary px-8 py-4 text-lg"
+              >
+                Create First Template
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full">
-              <h2 className="text-xl font-bold mb-4">Delete Project</h2>
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to delete this project? This will permanently delete all templates, texts, and images associated with code: <span className="font-bold">{code}</span>. This action cannot be undone.
-              </p>
-              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-3 border border-gray-300 rounded hover:bg-gray-50 touch-manipulation"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteProject}
-                  className="px-4 py-3 bg-red-500 text-white rounded hover:bg-red-600 touch-manipulation"
-                >
-                  Delete Project
-                </button>
+          <div className="premium-modal">
+            <div className="premium-modal-content max-w-lg">
+              <div className="text-center space-y-6">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-destructive/20 to-red-500/20 flex items-center justify-center mx-auto">
+                  <Trash2 className="w-8 h-8 text-destructive" />
+                </div>
+                
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Delete Project</h2>
+                  <p className="text-muted-foreground">
+                    Are you sure you want to permanently delete this project? This will remove all templates, texts, and images associated with code: 
+                    <span className="font-mono text-primary block mt-2">{code}</span>
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="premium-button-secondary px-6 py-3"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteProject}
+                    className="premium-button-destructive px-6 py-3"
+                  >
+                    Delete Forever
+                  </button>
+                </div>
               </div>
             </div>
           </div>

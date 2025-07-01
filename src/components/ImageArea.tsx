@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { uploadToCloudinary } from '../lib/cloudinary';
+import { Upload, Image as ImageIcon, Trash2, Camera } from 'lucide-react';
 
 interface ImageAreaProps {
   image?: string;
@@ -67,11 +68,11 @@ export const ImageArea: React.FC<ImageAreaProps> = ({ image, onImageChange, onDe
   };
 
   return (
-    <div className="relative">
+    <div className="relative group">
       <div
-        className={`border-2 border-dashed p-4 min-h-48 md:min-h-64 flex flex-col items-center justify-center cursor-pointer touch-manipulation ${
-          isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-        } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`image-upload-area min-h-64 md:min-h-80 flex flex-col items-center justify-center transition-all duration-300 ${
+          isSelected ? 'active' : ''
+        } ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         onClick={handleClick}
         onPaste={handlePaste}
         onDrop={handleDrop}
@@ -79,11 +80,11 @@ export const ImageArea: React.FC<ImageAreaProps> = ({ image, onImageChange, onDe
         tabIndex={0}
       >
         {image ? (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center p-4">
             <img 
               src={image} 
               alt="Uploaded" 
-              className="max-w-full max-h-full object-contain rounded"
+              className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
               style={{ 
                 maxHeight: '400px',
                 width: 'auto',
@@ -92,28 +93,47 @@ export const ImageArea: React.FC<ImageAreaProps> = ({ image, onImageChange, onDe
             />
           </div>
         ) : isUploading ? (
-          <div className="text-center p-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-            <p className="text-gray-600 text-sm">Uploading image...</p>
+          <div className="text-center p-8">
+            <div className="loading-spinner mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Uploading image...</p>
           </div>
         ) : (
-          <div className="text-center p-4">
+          <div className="text-center p-8">
             {isSelected ? (
-              <div className="space-y-4">
-                <p className="text-gray-600 mb-4 text-sm md:text-base">Now you can paste an image or click upload button below</p>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleFileUpload();
-                  }}
-                  className="text-blue-500 underline text-lg py-2 px-4 touch-manipulation"
-                  disabled={isUploading}
-                >
-                  Click to upload
-                </button>
+              <div className="space-y-6">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-primary/20 to-blue-500/20 flex items-center justify-center mx-auto">
+                  <Camera className="w-8 h-8 text-primary" />
+                </div>
+                <div>
+                  <p className="text-foreground mb-4 text-lg font-medium">Ready to upload</p>
+                  <p className="text-muted-foreground text-sm mb-6">
+                    Paste an image or click the button below
+                  </p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFileUpload();
+                    }}
+                    className="premium-button-primary flex items-center space-x-2 mx-auto"
+                    disabled={isUploading}
+                  >
+                    <Upload className="w-5 h-5" />
+                    <span>Choose File</span>
+                  </button>
+                </div>
               </div>
             ) : (
-              <p className="text-gray-600 text-sm md:text-base">Image - Click to select, then paste or upload</p>
+              <div className="space-y-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-primary/20 to-blue-500/20 flex items-center justify-center mx-auto">
+                  <ImageIcon className="w-8 h-8 text-primary" />
+                </div>
+                <div>
+                  <p className="text-foreground text-lg font-medium mb-2">Add Image</p>
+                  <p className="text-muted-foreground text-sm">
+                    Click to select, then paste or upload
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -122,9 +142,9 @@ export const ImageArea: React.FC<ImageAreaProps> = ({ image, onImageChange, onDe
       {image && (
         <button
           onClick={handleDelete}
-          className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center z-10"
+          className="absolute top-4 right-4 delete-button opacity-0 group-hover:opacity-100 transition-all duration-300"
         >
-          Delete
+          <Trash2 className="w-5 h-5" />
         </button>
       )}
       

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save } from 'lucide-react';
+import { Save, Plus, Settings, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import { ImageArea } from '../components/ImageArea';
 import { getProjectData, updateProjectImages } from '../services/firestore';
 import { deleteFromCloudinary } from '../lib/cloudinary';
@@ -65,11 +65,9 @@ export const ImagesPage: React.FC = () => {
     setImages(newImages);
     setHasUnsavedChanges(true);
     
-    // Delete image from Cloudinary
     if (imageToDelete && imageToDelete.trim() !== '') {
       deleteFromCloudinary(imageToDelete).catch(error => {
         console.error('Failed to delete image from Cloudinary:', error);
-        // Don't show error toast since this is expected behavior with unsigned uploads
       });
     }
     
@@ -79,49 +77,100 @@ export const ImagesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 space-y-4 sm:space-y-0">
-          <h1 className="text-xl md:text-2xl font-bold">Code: {code}</h1>
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-            <button
-              onClick={saveAllImages}
-              className={`px-6 py-3 rounded flex items-center justify-center touch-manipulation ${
-                hasUnsavedChanges 
-                  ? 'bg-orange-500 hover:bg-orange-600 text-white' 
-                  : 'bg-green-500 hover:bg-green-600 text-white'
-              }`}
-            >
-              <Save size={20} className="mr-2" />
-              {hasUnsavedChanges ? 'Save All*' : 'Save All'}
-            </button>
-            <button
-              onClick={() => navigate(`/background/${code}`)}
-              className="w-full sm:w-auto bg-purple-500 text-white px-6 py-3 rounded hover:bg-purple-600 touch-manipulation"
-            >
-              Go to Background
-            </button>
+    <div className="min-h-screen p-4 md:p-8 animate-fade-in">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="premium-header">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-6 lg:space-y-0">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate('/')}
+                className="navigation-button"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold gradient-text">Image Vault</h1>
+                <p className="text-muted-foreground mt-1">
+                  Code: <span className="font-mono text-primary">{code}</span>
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
+              <button
+                onClick={saveAllImages}
+                className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  hasUnsavedChanges 
+                    ? 'premium-button-warning' 
+                    : 'premium-button-success'
+                }`}
+              >
+                <Save className="w-5 h-5" />
+                <span>{hasUnsavedChanges ? 'Save Changes*' : 'All Saved'}</span>
+              </button>
+              
+              <button
+                onClick={() => navigate(`/background/${code}`)}
+                className="premium-button-primary flex items-center justify-center space-x-2 px-6 py-3"
+              >
+                <Settings className="w-5 h-5" />
+                <span>Background Settings</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <button
-            onClick={addImage}
-            className="w-full sm:w-auto bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 touch-manipulation"
-          >
-            Add Image
-          </button>
+        {/* Content */}
+        <div className="space-y-8">
+          {/* Add Image Button */}
+          <div className="text-center">
+            <button
+              onClick={addImage}
+              className="group premium-button-primary px-8 py-4 text-lg flex items-center space-x-3 mx-auto"
+            >
+              <Plus className="w-6 h-6 transition-transform group-hover:rotate-90" />
+              <span>Add New Image</span>
+            </button>
+          </div>
 
+          {/* Images Grid */}
           {showImageAreas && (
-            <div className="space-y-6">
+            <div className="grid gap-8">
               {images.map((image, index) => (
-                <ImageArea
-                  key={index}
-                  image={image}
-                  onImageChange={(newImage) => updateImage(index, newImage)}
-                  onDelete={() => deleteImage(index)}
-                />
+                <div key={index} className="premium-card animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary to-blue-600 flex items-center justify-center">
+                      <ImageIcon className="w-4 h-4 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold">Image #{index + 1}</h3>
+                  </div>
+                  <ImageArea
+                    image={image}
+                    onImageChange={(newImage) => updateImage(index, newImage)}
+                    onDelete={() => deleteImage(index)}
+                  />
+                </div>
               ))}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!showImageAreas && (
+            <div className="text-center py-16 animate-scale-in">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-primary/20 to-blue-500/20 flex items-center justify-center mx-auto mb-6">
+                <ImageIcon className="w-12 h-12 text-primary" />
+              </div>
+              <h3 className="text-2xl font-bold mb-2">No Images Yet</h3>
+              <p className="text-muted-foreground mb-8">
+                Start building your image collection by adding your first image
+              </p>
+              <button
+                onClick={addImage}
+                className="premium-button-primary px-8 py-4 text-lg"
+              >
+                Add First Image
+              </button>
             </div>
           )}
         </div>
